@@ -77,7 +77,7 @@ jobs:
       - run:
           name: Back-end unit test
           command: |
-             cd backend
+             cd frontend
              npm install
              npm test
                 
