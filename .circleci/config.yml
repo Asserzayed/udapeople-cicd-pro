@@ -1,36 +1,49 @@
 version: 2.1
 
-commands:
-  destroy-environment:
-    description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
-    parameters:
-      # Add parameter here   
-    steps:
-      - run:
-          name: Destroy environments
-          when: on_fail
-          command: |
-            # Your code here
-            exit 1
 
-  revert-migrations:
-    description: Revert the last migration if successfully run in the current workflow.
-    parameters:
-      # Add parameter here     
+orbs:
+  node: 'circleci/node:4.1'
+  slack: circleci/slack@4.1
+
+commands:
+  notify-on-failure:
     steps:
-      - run:
-          name: Revert migrations
-          # Add when this will run
-          command: |
-            # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
-            SUCCESS = 1
-            if(( $SUCCESS==1 )); 
-            then
-            #  cd ~/project/backend
-            #  npm install
-            #  Add revert code here. You can find this in the Getting Started section.
-              exit 1
-            fi
+      - slack/notify:
+        channel: ci-cd
+        event: fail
+        template: basic_fail_1
+
+  # destroy-environment:
+  #   description: Destroy back-end and front-end cloudformation stacks given a workflow ID.
+  #   parameters:
+  #     # Add parameter here   
+  #   steps:
+  #     - run:
+  #         name: Destroy environments
+  #         when: on_fail
+  #         command: |
+  #           # Your code here
+  #           exit 1
+
+  # revert-migrations:
+  #   description: Revert the last migration if successfully run in the current workflow.
+  #   parameters:
+  #     # Add parameter here     
+  #   steps:
+  #     - run:
+  #         name: Revert migrations
+  #         # Add when this will run
+  #         command: |
+  #           # Curl command here to see if there was a successful migration associated with the workflow id, store result in SUCCESS variable
+  #           SUCCESS = 1
+  #           if(( $SUCCESS==1 )); 
+  #           then
+  #           #  cd ~/project/backend
+  #           #  npm install
+  #           #  Add revert code here. You can find this in the Getting Started section.
+  #             exit 1
+  #           fi
+
             
 jobs:
   build-frontend:
@@ -49,7 +62,7 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
-
+      - notify-on-failure
   build-backend:
     docker:
       - image: cimg/node:13.8.0
@@ -66,6 +79,7 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+      - notify-on-failure
 
   test-frontend:
     docker:
@@ -80,6 +94,7 @@ jobs:
              cd frontend
              npm install
              npm test
+      - notify-on-failure
                 
   test-backend:
     docker:
@@ -94,6 +109,7 @@ jobs:
              cd backend
              npm install
              npm test
+      - notify-on-failure
             
   scan-frontend:
     docker:
@@ -109,6 +125,7 @@ jobs:
              npm install
              npm audit fix --force --audit-level=critical
              npm audit --audit-level=critical
+      - notify-on-failure
 
   scan-backend:
     docker:
@@ -125,6 +142,7 @@ jobs:
              npm audit fix --force --audit-level=critical
              npm audit fix --force --audit-level=critical
              npm audit --audit-level=critical
+      - notify-on-failure
 
 #   deploy-infrastructure:
 #     docker:
@@ -290,7 +308,13 @@ jobs:
 #             then
 #               # your code here
 #             fi
-            
+    notify-on-success:
+      docker:
+        - image: cimg/base:stable
+      steps:
+        - slack/notify:
+          event: pass
+          template: success_tagged_deploy_1
 
 workflows:
   default:
@@ -305,6 +329,12 @@ workflows:
           requires: [build-backend]
       - scan-frontend:
           requires: [build-frontend]
+      - notify-on-success:
+          requires:
+            - test-frontend
+            - test-backend
+            - scan-frontend
+            - scan-backend
       # - deploy-infrastructure:
       #     requires: [test-frontend, test-backend, scan-frontend, scan-backend]
       #     filters:
