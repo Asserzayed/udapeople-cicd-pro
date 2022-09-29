@@ -338,7 +338,7 @@ jobs:
 
   smoke-test:
     docker:
-      # Lightweight Docker image 
+      - image: cimg/base:stable
     steps:
       - checkout
       - install_aws_cli
