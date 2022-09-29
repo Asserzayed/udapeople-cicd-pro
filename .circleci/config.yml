@@ -282,6 +282,7 @@ jobs:
               --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
 
+            export API_URL=http://$BACKEND_IP:3030"
             echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
@@ -408,7 +409,7 @@ jobs:
           command: |
               export STACKS=($(aws cloudformation list-stacks \
                   --query "StackSummaries[*].StackName" \
-                  --stack-status-filter CREATE_COMPLETE --no-paginate --output-text))
+                  --stack-status-filter CREATE_COMPLETE --no-paginate --output text))
               echo Stack Names : "${STACKS[@]}"
               export OldWorkflowID=$(curl --insecure https://kvdb.io/${KVDB_BUCKET}/old_workflow_id)
               echo Old Workflow ID : "${OldWorkflowID}"
