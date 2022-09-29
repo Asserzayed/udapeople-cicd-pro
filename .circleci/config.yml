@@ -213,6 +213,7 @@ jobs:
       - image: cimg/base:stable
     steps:
       - checkout
+      - install_aws_cli
       - install_ansible
       - add_ssh_keys:
           fingerprints:
