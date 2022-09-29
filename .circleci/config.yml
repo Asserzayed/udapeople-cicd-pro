@@ -402,7 +402,7 @@ jobs:
     steps:
       - checkout
       - install_aws_cli
-      - install_node_js
+      - install_nodejs
       - run:
           name: Get old stack workflow id & remove relavent stacks and buckets
           command: |
